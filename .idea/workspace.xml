@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="03903129-100c-4781-89ab-077b2c19682b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-    </list>
+    <list default="true" id="03903129-100c-4781-89ab-077b2c19682b" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -46,7 +44,7 @@
     "Gradle.Build alfred-docs-cli.executor": "Run",
     "Kotlin.MainKt.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/rohan/Projects/span-front-end",
@@ -102,7 +100,7 @@
       <workItem from="1743756489740" duration="4234000" />
       <workItem from="1743761063100" duration="3694000" />
       <workItem from="1743826944391" duration="4400000" />
-      <workItem from="1743837706669" duration="5616000" />
+      <workItem from="1743837706669" duration="5966000" />
     </task>
     <servers />
   </component>
