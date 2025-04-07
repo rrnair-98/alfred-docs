@@ -712,9 +712,10 @@ stringConstant
     : Label
     ;
 
+
 string
-    : StartHereDoc HereDocText+
-    | StartNowDoc HereDocText+
+    : StartHereDoc
+    // | StartNowDoc HereDocText+
     | SingleQuoteString
     | DoubleQuote interpolatedStringPart* DoubleQuote
     ;

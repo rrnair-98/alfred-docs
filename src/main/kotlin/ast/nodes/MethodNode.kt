@@ -9,7 +9,7 @@ data class MethodNode(
     private val className: String,
     private val methodBody: String,
     private val name: String
-): BaseNode(methodLineNumber, methodFilePath) {
+): BaseAstNode(methodLineNumber, methodFilePath) {
     private val argsList = this.methodBody.substringAfter('(').substringBefore(')')
 
 }

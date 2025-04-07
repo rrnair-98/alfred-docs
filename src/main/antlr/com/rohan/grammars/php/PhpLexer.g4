@@ -118,9 +118,9 @@ mode PHP;
 
 PHPEnd            : ('?' | '%'    {this.hasAspTags()}?) '>' | '</script>' {this.hasPhpScriptTag()}?;
 Whitespace        : [ \t\r\n]+    -> channel(SkipChannel);
-fragment NEWLINE : '\r'? '\n';
+fragment NewLine : '\r'? '\n';
 
-MultiLineComment  : '/*' .*? [\r\n]* NEWLINE? '*/';
+MultiLineComment  : '/*' .*? [\r\n]* NewLine? '*/';
 SingleLineComment : '//'          -> channel(SkipChannel), pushMode(SingleLineCommentMode);
 ShellStyleComment : '#'           -> channel(SkipChannel), pushMode(SingleLineCommentMode);
 
@@ -325,10 +325,13 @@ BackQuoteString   : '`' ~'`'* '`';
 SingleQuoteString : '\'' (~('\'' | '\\') | '\\' .)* '\'';
 DoubleQuote       : '"' -> pushMode(InterpolationString);
 
-StartNowDoc:
-    '<<<' [ \t]* '\'' NameString '\'' { this.shouldPushHereDocMode(1) }? -> pushMode(HereDoc)
-;
-StartHereDoc : '<<<' [ \t]* NameString { this.shouldPushHereDocMode(1) }? -> pushMode(HereDoc);
+//StartNowDoc:
+//    '<<<' [ \t]* '\'' NameString '\'' -> channel(SkipChannel)
+//;
+StartHereDoc : '<<<' [ \t]* '\''? NameString '\''? NewLine .*? NewLine NameString;
+// HereDocText: ~[\r\n]*? ('\r'? '\n' | '\r');
+
+
 ErrorPhp     : .                       -> channel(ErrorLexem);
 
 mode InterpolationString;
@@ -351,10 +354,10 @@ PHPEndSingleLineComment : '?' '>';
 CommentQuestionMark     : '?'    -> type(Comment), channel(PhpComments);
 CommentEnd              : [\r\n] -> channel(SkipChannel), popMode; // exit from comment.
 
-mode HereDoc;
+// mode HereDoc;
 // TODO: interpolation for heredoc strings.
 
-HereDocText: ~[\r\n]*? ('\r'? '\n' | '\r') -> popMode;
+
 
 // fragments.
 // '<?=' will be transformed to 'echo' token.
