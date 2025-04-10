@@ -32,14 +32,14 @@ import com.rohan.grammars.php.*;
 import org.antlr.v4.kotlinruntime.Token
 
 abstract class PhpLexerBase(input: CharStream) : Lexer(input) {
-    protected var AspTags = true
-    protected var _scriptTag = false
-    protected var _styleTag = false
-    protected var _heredocIdentifier: String? = null
-    protected var _prevTokenType = 0
-    protected var _htmlNameText: String? = null
-    protected var _phpScript = false
-    protected var _insideString = false
+    protected var aspTags = true
+    protected var scriptTag = false
+    protected var styleTag = false
+    protected var heredocIdentifier: String? = null
+    protected var prevTokenType = 0
+    protected var htmlNameText: String? = null
+    protected var phpScript = false
+    protected var insideString = false
 
     override fun nextToken(): Token {
         val token = super.nextToken() as CommonToken
@@ -54,13 +54,13 @@ abstract class PhpLexerBase(input: CharStream) : Lexer(input) {
                 popMode() // exit from PHP mode.
 
                 if (token.text == "</script>") {
-                    _phpScript = false
+                    phpScript = false
                     token.type = PhpLexer.Tokens.HtmlScriptClose
                 } else {
                     // Add semicolon to the end of statement if it is absent.
                     // For example: <?php echo "Hello world" ?>
-                    if (_prevTokenType == PhpLexer.Tokens.SemiColon || _prevTokenType == PhpLexer.Tokens.Colon
-                            || _prevTokenType == PhpLexer.Tokens.OpenCurlyBracket || _prevTokenType == PhpLexer.Tokens.CloseCurlyBracket) {
+                    if (prevTokenType == PhpLexer.Tokens.SemiColon || prevTokenType == PhpLexer.Tokens.Colon
+                            || prevTokenType == PhpLexer.Tokens.OpenCurlyBracket || prevTokenType == PhpLexer.Tokens.CloseCurlyBracket) {
                         token.channel = PhpLexer.Channels.SkipChannel
                     } else {
                         token.type = PhpLexer.Tokens.SemiColon
@@ -68,39 +68,40 @@ abstract class PhpLexerBase(input: CharStream) : Lexer(input) {
                 }
             }
             PhpLexer.Tokens.HtmlName -> {
-                _htmlNameText = token.text
+                htmlNameText = token.text
             }
             PhpLexer.Tokens.HtmlDoubleQuoteString -> {
-                if (token.text == "php" && _htmlNameText == "language") {
-                    _phpScript = true
+                if (token.text == "php" && htmlNameText == "language") {
+                    phpScript = true
                 }
             }
         }
-
-        if (_mode == PhpLexer.Modes.HEREDOC) {
-            // Heredoc and Nowdoc syntax support: http://php.net/manual/en/language.types.string.php#language.types.string.syntax.heredoc
-            when (token.type) {
-                PhpLexer.Tokens.StartHereDoc, PhpLexer.Tokens.StartNowDoc -> {
-                    _heredocIdentifier = token.text?.substring(3)?.trim()?.replace("'", "")
-                }
-                PhpLexer.Tokens.HereDocText -> {
-                    if (checkHeredocEnd(token.text.toString())) {
-                        popMode()
-
-                        val heredocIdentifier = getHeredocIdentifier(token.text.toString())
-                        if (token.text?.trim()?.endsWith(";") == true) {
-                            return CommonToken(PhpLexer.Tokens.SemiColon, "$heredocIdentifier;\n")
-                        } else {
-                            val nextToken = super.nextToken() as CommonToken
-                            nextToken.text = "$heredocIdentifier\n;"
-                            return nextToken
-                        }
-                    }
-                }
-            }
-        } else if (_mode == PhpLexer.Modes.PHP) {
+        // HEREDOCS And NOWDOCS dont have to be parsed/ interpolated rn, just their tokens are sufficient atm
+//        if (_mode == PhpLexer.Modes.HEREDOC) {
+//            // Heredoc and Nowdoc syntax support: http://php.net/manual/en/language.types.string.php#language.types.string.syntax.heredoc
+//            when (token.type) {
+//                PhpLexer.Tokens.StartHereDoc, PhpLexer.Tokens.StartNowDoc -> {
+//                    heredocIdentifier = token.text?.substring(3)?.trim()?.replace("'", "")
+//                }
+//                PhpLexer.Tokens.HereDocText -> {
+//                    if (checkHeredocEnd(token.text.toString())) {
+//                        popMode()
+//
+//                        val heredocIdentifier = getHeredocIdentifier(token.text.toString())
+//                        if (token.text?.trim()?.endsWith(";") == true) {
+//                            return CommonToken(PhpLexer.Tokens.SemiColon, "$heredocIdentifier;\n")
+//                        } else {
+//                            val nextToken = super.nextToken() as CommonToken
+//                            nextToken.text = "$heredocIdentifier\n;"
+//                            return nextToken
+//                        }
+//                    }
+//                }
+//            }
+//        } else
+        if (_mode == PhpLexer.Modes.PHP) {
             if (this.channel != PhpLexer.Channels.HIDDEN) {
-                _prevTokenType = token.type
+                prevTokenType = token.type
             }
         }
 
@@ -114,7 +115,7 @@ abstract class PhpLexerBase(input: CharStream) : Lexer(input) {
     }
 
     private fun checkHeredocEnd(text: String): Boolean {
-        return getHeredocIdentifier(text) == _heredocIdentifier
+        return getHeredocIdentifier(text) == heredocIdentifier
     }
 
     protected fun isNewLineOrStart(pos: Int): Boolean {
@@ -125,32 +126,32 @@ abstract class PhpLexerBase(input: CharStream) : Lexer(input) {
     protected fun pushModeOnHtmlClose() {
         popMode()
         when {
-            _scriptTag -> {
-                if (!_phpScript) {
+            scriptTag -> {
+                if (!phpScript) {
                     pushMode(PhpLexer.Modes.SCRIPT)
                 } else {
                     pushMode(PhpLexer.Modes.PHP)
                 }
-                _scriptTag = false
+                scriptTag = false
             }
-            _styleTag -> {
+            styleTag -> {
                 pushMode(PhpLexer.Modes.STYLE)
-                _styleTag = false
+                styleTag = false
             }
         }
     }
 
     protected fun hasAspTags(): Boolean {
-        return AspTags
+        return aspTags
     }
 
     protected fun hasPhpScriptTag(): Boolean {
-        return _phpScript
+        return phpScript
     }
 
     protected fun popModeOnCurlyBracketClose() {
-        if (_insideString) {
-            _insideString = false
+        if (insideString) {
+            insideString = false
             this.channel = PhpLexer.Channels.SkipChannel
             popMode()
         }
@@ -166,6 +167,6 @@ abstract class PhpLexerBase(input: CharStream) : Lexer(input) {
     }
 
     protected fun setInsideString() {
-        _insideString = true
+        insideString = true
     }
 }

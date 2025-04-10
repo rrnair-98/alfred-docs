@@ -1,5 +1,5 @@
 package com.rohan.ast.nodes.enums
 
-enum class Types {
+enum class InbuiltTypes {
     BYTE, SHORT, INT, LONG, FLOAT, DOUBLE
 }

@@ -39,10 +39,9 @@ options {
 // Also see here: https://github.com/antlr/grammars-v4/tree/master/html
 
 htmlDocument
-    : Shebang? (comments | inlineHtml | phpBlock)* EOF
+    : Shebang? (MultiLineComment | inlineHtml | phpBlock)* EOF
     ;
 
-comments: MultiLineComment+;
 
 inlineHtml
     : htmlElement+
@@ -92,9 +91,9 @@ importStatement
     ;
 
 topStatement
-    : statement
+    : namespaceDeclaration
+    | statement
     | useDeclaration
-    | namespaceDeclaration
     | functionDeclaration
     | classDeclaration
     | globalConstantDeclaration
@@ -136,7 +135,7 @@ functionDeclaration
     ;
 
 classDeclaration
-    : attributes? Private? modifier? Partial? (
+    : MultiLineComment* attributes? Private? modifier? Partial? (
         classEntryType identifier typeParameterListInBrackets? (Extends qualifiedStaticTypeRef)? (
             Implements interfaceList
         )?
@@ -396,7 +395,7 @@ staticVariableStatement
     ;
 
 classStatement
-    : attributes? (
+    : MultiLineComment* attributes? (
         propertyModifiers typeHint? variableInitializer (',' variableInitializer)* SemiColon
         | memberModifiers? (
             Const typeHint? identifierInitializer (',' identifierInitializer)* SemiColon

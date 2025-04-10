@@ -17,7 +17,10 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation("org.slf4j:slf4j-simple:2.0.17")
     implementation("com.strumenta:antlr-kotlin-runtime:1.0.0")
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 
 tasks.test {
