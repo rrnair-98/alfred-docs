@@ -136,12 +136,14 @@ functionDeclaration
 
 classDeclaration
     : MultiLineComment* attributes? Private? modifier? Partial? (
-        classEntryType identifier typeParameterListInBrackets? (Extends qualifiedStaticTypeRef)? (
+        classEntryType identifier typeParameterListInBrackets? (extendsFrom)? (
             Implements interfaceList
         )?
         | Interface identifier typeParameterListInBrackets? (Extends interfaceList)?
     ) OpenCurlyBracket classStatement* CloseCurlyBracket
     ;
+
+extendsFrom: Extends qualifiedStaticTypeRef;
 
 classEntryType
     : Class
@@ -626,7 +628,7 @@ typeRef
 
 anonymousClass
     : attributes? Private? modifier? Partial? (
-        classEntryType typeParameterListInBrackets? (Extends qualifiedStaticTypeRef)? (
+        classEntryType typeParameterListInBrackets? (extendsFrom)? (
             Implements interfaceList
         )?
         | Interface identifier typeParameterListInBrackets? (Extends interfaceList)?

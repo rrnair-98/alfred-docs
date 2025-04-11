@@ -2,7 +2,6 @@ package com.rohan.ast
 
 import com.rohan.ast.nodes.*
 import com.rohan.ast.nodes.enums.ImportKind
-import com.rohan.grammars.php.PhpLexer
 import com.rohan.grammars.php.PhpParser
 import com.rohan.grammars.php.PhpParserBaseVisitor
 import org.slf4j.LoggerFactory
@@ -45,7 +44,7 @@ class PhpAstGenVisitor(private val filePath: String) : PhpParserBaseVisitor<Base
             packageColNumber = 0u
         )
         packageName.clear()
-        this.fileBuilder.packageNode(packageNode)
+        this.fileBuilder.setPackageNode(packageNode)
         return null
     }
 
@@ -55,19 +54,49 @@ class PhpAstGenVisitor(private val filePath: String) : PhpParserBaseVisitor<Base
     }
 
 
+    override fun visitClassDeclaration(ctx: PhpParser.ClassDeclarationContext): BaseAstNode? {
+        LOGGER.info("in visitClassDeclaration")
+        val klassBuilder = this.fileBuilder.createNewClassBuilder()
+        ctx.identifier()?.let {
+            klassBuilder.setName(it.text)
+        }?: { LOGGER.warn("either class name was not defined or could not be parsed") }
+        // setting class inherited from
+        ctx.extendsFrom()?.let {
+            it.qualifiedStaticTypeRef().qualifiedNamespaceName()?.let { innerIt ->
+                klassBuilder.setExtendsFrom(innerIt.text)
+            }
+        }
+        // setting implemented interfaces
+        ctx.interfaceList()?.qualifiedStaticTypeRef()?.forEach {
+            it.qualifiedNamespaceName()?.let { qn ->
+                klassBuilder.addImplementedInterface(qn.text)
+            }
+        }
+
+        return null
+    }
+
     override fun visitUseDeclaration(ctx: PhpParser.UseDeclarationContext): BaseAstNode? {
         val importedPackageName = StringBuilder()
         ctx.useDeclarationContentList().useDeclarationContent()[0].namespaceNameList().identifier()
             .joinTo(importedPackageName, NAMESPACE_SEPARATOR) { it.text }
         // although the default is the first defined constant, its better this way in case someone changes it in the future
         var importKind = ImportKind.SIMPLE
-        ctx.Function_().let { importKind = ImportKind.FUNCTION; }
+        ctx.Function_()?.let { importKind = ImportKind.FUNCTION; }
         var aliasPackageName: String? = null
 
         ctx.useDeclarationContentList().useDeclarationContent()[0].namespaceNameList().namespaceNameTail()?.let {
             importKind = ImportKind.ALIAS
             if (!it.isEmpty) {
+                importedPackageName.append(NAMESPACE_SEPARATOR).append(it.identifier().first().text)
                 aliasPackageName = it.identifier().last().text
+            } else {
+                LOGGER.warn(
+                    "namespaceNameTail was empty, generated package name will be wrong for lineNumber: %d, content: %s".format(
+                        ctx.start?.line,
+                        ctx.text
+                    )
+                )
             }
         }
 
