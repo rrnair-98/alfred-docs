@@ -402,8 +402,8 @@ classStatement
         | memberModifiers? (
             Const typeHint? identifierInitializer (',' identifierInitializer)* SemiColon
             | Function_ '&'? identifier typeParameterListInBrackets? '(' formalParameterList ')' (
-                baseCtorCall
-                | returnTypeDecl
+                returnTypeDecl
+                | baseCtorCall
             )? methodBody
         )
     )

@@ -4,6 +4,7 @@ import com.rohan.ast.PhpAstGenVisitor
 import com.rohan.ast.nodes.FileNode
 import com.rohan.ast.nodes.PackageNode
 import com.rohan.ast.nodes.enums.ImportKind
+import com.rohan.ast.nodes.enums.MethodKind
 import com.rohan.grammars.php.PhpLexer
 import com.rohan.grammars.php.PhpParser
 import org.antlr.v4.kotlinruntime.CharStreams
@@ -17,9 +18,7 @@ import kotlin.test.assertEquals
 
 class PhpAstGenVisitorTest {
 
-    companion object {
-        val log: Logger = LoggerFactory.getLogger(PhpAstGenVisitorTest::class.java)
-    }
+
 
     @Test
     fun tesHelloWorld() {
@@ -73,5 +72,99 @@ class PhpAstGenVisitorTest {
         Assertions.assertEquals("ExceptionHandler", parsedFile.klasses?.get(1)?.inheritsFrom)
         Assertions.assertEquals("", parsedFile.klasses?.get(1)?.
             implementedInterfaces?.joinToString(","))
+
+        val methods = parsedFile.klasses?.get(1)?.methods
+        Assertions.assertEquals(2, methods?.size)
+
+        Assertions.assertEquals("register", methods?.get(0)?.name)
+        Assertions.assertEquals("Handler", methods?.get(0)?.className)
+        Assertions.assertEquals("Hello\\World", methods?.get(0)?.packageName)
+        // Assertions.assertEquals(METHOD_BODY, methods?.get(0)?.methodBody)
+        Assertions.assertEquals(MethodKind.METHOD, methods?.get(0)?.methodKind)
+        Assertions.assertFalse(methods?.get(0)?.docComment!!.isEmpty())
+        Assertions.assertEquals(REGISTER_MULTLINE_COMMENT.trim(), methods?.get(0)?.docComment?.trim()?.replace("\r\n", "\n"))
+
+        Assertions.assertEquals("theOtherFunction", methods[1].name)
+        Assertions.assertEquals("Handler", methods[1].className)
+        Assertions.assertEquals("Hello\\World", methods[1].packageName)
+        Assertions.assertEquals(MethodKind.METHOD, methods[1].methodKind)
+        Assertions.assertTrue(methods[1].docComment.isEmpty())
+
+    }
+
+    companion object {
+        val log: Logger = LoggerFactory.getLogger(PhpAstGenVisitorTest::class.java)
+        // TODO: move to fixture
+
+        private final const val REGISTER_MULTLINE_COMMENT = """    /**
+     * Register the exception handling callbacks for the application.
+     */"""
+        private final const val METHOD_BODY = """{
+        \${'$'}this->reportable(function (Throwable \${'$'}e) {
+            if (!is_null(env('SENTRY_DSN'))) {
+                Integration::captureUnhandledException(\${'$'}e);
+            }
+        });
+
+        \${'$'}this->renderable(function (ValidationException \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                return ResponseHelper::unprocessableEntity(\${'$'}exception->errors());
+            }
+        });
+
+        \${'$'}this->renderable(function (NotFoundHttpException \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                if (\${'$'}exception->getPrevious() instanceof ModelNotFoundException) {
+                    \${'$'}modelName = class_basename(\${'$'}exception->getPrevious()->getModel());
+                    return ResponseHelper::notFound("\${'$'}modelName does not exist with the specified key!");
+                }
+                return ResponseHelper::notFound(\${'$'}exception->getMessage());
+            }
+        });
+
+        \${'$'}this->renderable(function (InvalidCredentialsException \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                return ResponseHelper::errorResponse(ResponseAlias::HTTP_UNAUTHORIZED, \${'$'}exception->getMessage());
+            }
+        });
+
+        \${'$'}this->renderable(function (AuthorizationException \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                return ResponseHelper::errorResponse(ResponseAlias::HTTP_FORBIDDEN, \${'$'}exception->getMessage());
+            }
+        });
+
+        \${'$'}this->renderable(function (MethodNotAllowedHttpException \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                return ResponseHelper::methodNotAllowed('The specified method for the request is invalid');
+            }
+            return redirect()->back();
+        });
+
+        \${'$'}this->renderable(function (TypeError \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                return ResponseHelper::badRequest();
+            }
+        });
+
+        \${'$'}this->renderable(function (QueryException \${'$'}exception, Request \${'$'}request) {
+            Log::error(\${'$'}exception);
+            if (ResponseHelper::isApiCall(\${'$'}request)) {
+                \${'$'}errorCode = \${'$'}exception->errorInfo[1];
+
+                if (\${'$'}errorCode == self::FOREIGN_KEY_VIOLATION_CODE) {
+                    return ResponseHelper::errorResponse('Cannot remove this resource permanently,
+                as it is related with any other resource', 409);
+                }
+                return ResponseHelper::internalError();
+            }
+        });
+    }"""
     }
 }

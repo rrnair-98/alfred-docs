@@ -2,12 +2,13 @@ package com.rohan.ast.nodes
 
 import com.rohan.ast.nodes.enums.KlassKind
 
-class KlassNodeBuilder {
+open class KlassNodeBuilder {
     // TODO make it idiomatic
     private var klassLineNumber: UInt = 0u
     private var klassKind: KlassKind = KlassKind.SIMPLE
     private lateinit var packageName: String
     private val methods: MutableList<MethodNode> = mutableListOf()
+    private val methodBuilders: MutableList<MethodNodeBuilder> = mutableListOf()
     private lateinit var name: String
     private lateinit var extendsFrom: String
     private val implementsFrom: MutableList<String> = mutableListOf()
@@ -26,8 +27,21 @@ class KlassNodeBuilder {
         this.packageName = packageName
     }
 
+    fun currentMethodBuilder() : MethodNodeBuilder? {
+        if (this.methods.isEmpty()) {
+            return null
+        }
+        return this.methodBuilders.last()
+    }
+
+    fun createMethodBuilder(): MethodNodeBuilder {
+        var current = MethodNodeBuilder()
+        this.methodBuilders.addLast(current)
+        return current
+    }
+
     // Setter for methods
-    fun addMethod(method: MethodNode) = apply {
+    protected fun addMethod(method: MethodNode) = apply {
         this.methods.addLast(method)
     }
 
@@ -46,9 +60,7 @@ class KlassNodeBuilder {
 
     // Build method to create KlassNode
     fun build(): KlassNode {
-
-        require(this::packageName.isInitialized) { "packageName must be initialized" }
-
+        this.flushMethodsToList()
         return KlassNode(
             klassLineNumber = this.klassLineNumber,
             klassKind = this.klassKind,
@@ -58,5 +70,13 @@ class KlassNodeBuilder {
             implementedInterfaces = this.implementsFrom,
             name = this.name
         )
+    }
+
+    private fun flushMethodsToList() {
+        this.methodBuilders.forEach {
+            it.packageName(this.packageName)
+            it.className(this.name)
+            this.addMethod(it.build())
+        }
     }
 }

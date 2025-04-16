@@ -112,4 +112,8 @@ class Handler extends ExceptionHandler
         });
     }
 
+    public function theOtherFunction(): void {
+        echo("Im another function");
+    }
+
 }

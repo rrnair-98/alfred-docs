@@ -22,7 +22,7 @@ class FileNodeBuilder(private val filePath: String) {
         return this.klassBuilder
     }
 
-    fun addKlass(klass: KlassNode) = apply { this.klasses.addLast(klass) }
+    private fun addKlass(klass: KlassNode) = apply { this.klasses.addLast(klass) }
 
     fun addFunction(function: FunctionNode) = apply { this.functions.addLast(function) }
 

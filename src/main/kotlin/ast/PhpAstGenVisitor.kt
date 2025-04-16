@@ -49,7 +49,6 @@ class PhpAstGenVisitor(private val filePath: String) : PhpParserBaseVisitor<Base
     }
 
     override fun defaultResult(): BaseAstNode? {
-        LOGGER.info("defaultResult")
         return null
     }
 
@@ -59,7 +58,7 @@ class PhpAstGenVisitor(private val filePath: String) : PhpParserBaseVisitor<Base
         val klassBuilder = this.fileBuilder.createNewClassBuilder()
         ctx.identifier()?.let {
             klassBuilder.setName(it.text)
-        }?: { LOGGER.warn("either class name was not defined or could not be parsed") }
+        } ?: { LOGGER.warn("either class name was not defined or could not be parsed") }
         // setting class inherited from
         ctx.extendsFrom()?.let {
             it.qualifiedStaticTypeRef().qualifiedNamespaceName()?.let { innerIt ->
@@ -70,6 +69,24 @@ class PhpAstGenVisitor(private val filePath: String) : PhpParserBaseVisitor<Base
         ctx.interfaceList()?.qualifiedStaticTypeRef()?.forEach {
             it.qualifiedNamespaceName()?.let { qn ->
                 klassBuilder.addImplementedInterface(qn.text)
+            }
+        }
+        return super.visitClassDeclaration(ctx)
+    }
+
+    override fun visitClassStatement(ctx: PhpParser.ClassStatementContext): BaseAstNode? {
+        LOGGER.info("in visitClassStatement")
+        ctx.Function_()?.let {
+            // method definition found,
+            LOGGER.info("method definition foubd")
+            val methodBuilder = this.fileBuilder.currentClassBuilder()?.createMethodBuilder()
+            methodBuilder?.methodBody(ctx.text) ?: LOGGER.info("method Body not found")
+            ctx.identifier()?.text?.let { methodName ->  methodBuilder?.name(methodName) } ?: LOGGER.info("method name was null")
+            ctx.returnTypeDecl()?.text?.let { returnTypeVal -> methodBuilder?.methodReturnType(returnTypeVal) }
+            if(ctx.MultiLineComment().isNotEmpty())  {
+                ctx.MultiLineComment()[0].let {
+                    methodBuilder?.docComment(it.text)
+                }
             }
         }
 
@@ -107,7 +124,6 @@ class PhpAstGenVisitor(private val filePath: String) : PhpParserBaseVisitor<Base
         )
         importedPackageName.clear()
         this.fileBuilder.addImportNode(importNode)
-        LOGGER.info("in visitUseDeclaration")
         return null
     }
 
